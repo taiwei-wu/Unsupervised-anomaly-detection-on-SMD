@@ -1,0 +1,19 @@
+{
+  "machine": "machine-1-1",
+  "seed": 42,
+  "window_size": 96,
+  "threshold_quantile": 0.995,
+  "train_shape": [
+    28479,
+    38
+  ],
+  "test_shape": [
+    28479,
+    38
+  ],
+  "n_train_windows": 28384,
+  "n_test_windows": 28384,
+  "embedding_dim": 9728,
+  "projection": null,
+  "device": "cuda"
+}

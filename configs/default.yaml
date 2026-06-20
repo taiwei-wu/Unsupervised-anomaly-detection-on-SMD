@@ -1,0 +1,16 @@
+data_dir: SMD
+output_dir: outputs
+machine: machine-1-1
+seed: 42
+window_size: 96
+threshold_quantile: 0.995
+ae_epochs: 80
+ae_batch_size: 256
+ae_learning_rate: 0.001
+ae_weight_decay: 0.00001
+ae_patience: 12
+ae_hidden_channels: 128
+mantis_batch_size: 128
+mantis_projection_dim: 256
+mantis_device: auto
+figure_dpi: 220
