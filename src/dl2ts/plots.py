@@ -67,9 +67,10 @@ def plot_mixed_scale_scores(
     axes[0].set_ylabel("log score")
     axes[0].set_title("Autoencoder")
 
-    axes[1].plot(timestamps, mantis_scores, linewidth=0.75, label="MANTIS score")
+    axes[1].plot(timestamps, np.maximum(mantis_scores, 1e-8), linewidth=0.75, label="MANTIS score")
     axes[1].axhline(mantis_threshold, color="tab:red", linestyle="--", linewidth=1.0, label="train 99.5% threshold")
-    axes[1].set_ylabel("score")
+    axes[1].set_yscale("log")
+    axes[1].set_ylabel("log score")
     axes[1].set_title("MANTIS")
     axes[1].set_xlabel("test timestamp")
 

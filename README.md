@@ -3,9 +3,10 @@
 This repository contains the code and report for the DL4TS project on unsupervised anomaly detection in multivariate time series. The experiment compares two methods on the Server Machine Dataset (SMD):
 
 1. A convolutional autoencoder trained only on normal SMD windows.
-2. A zero-shot MANTIS time-series foundation model used as a frozen embedding extractor.
+2. A zero-shot MANTIS time-series foundation model used as embedding extractor.
 
-The default configuration uses `machine-1-1`, 96-step windows, train-only standardization, train-quantile thresholding, and the same evaluation code for both methods.
+The default configuration uses `machine-1-1`, 96-step windows, train-only standardization, and the same evaluation code for both methods. 
+Metrics are reported with the original train 99.5% quantile threshold and with an EVT peak-over-threshold threshold fitted on normal training scores.
 
 ## Repository structure
 
@@ -50,7 +51,7 @@ From the repository root:
 python scripts/run_experiment.py --config configs/default.yaml
 ```
 
-The script trains the autoencoder, extracts frozen MANTIS embeddings, computes metrics, and writes:
+The script trains the autoencoder, extracts frozen raw MANTIS embeddings, computes metrics, and writes:
 
 ```text
 outputs/machine-1-1/metrics.csv
@@ -60,7 +61,7 @@ outputs/machine-1-1/autoencoder_history.csv
 outputs/machine-1-1/figures/*.png
 ```
 
-The raw MANTIS ablation uses the original 9728-dimensional embedding without random projection:
+The raw MANTIS-only script recomputes the frozen 9728-dimensional embedding score without training the autoencoder:
 
 ```bash
 python scripts/run_mantis_raw.py --config configs/default.yaml
@@ -70,9 +71,10 @@ It writes `outputs/machine-1-1/mantis_raw_9728/metrics.csv` and `summary.json`.
 
 The submitted run obtained:
 
-| Method | AUROC | AUPRC | F1 | Point-adjusted F1 |
-|---|---:|---:|---:|---:|
-| Autoencoder | 0.947 | 0.564 | 0.241 | 0.241 |
-| MANTIS 256-D | 0.781 | 0.308 | 0.368 | 0.610 |
-| MANTIS 9728-D | 0.832 | 0.327 | 0.431 | 0.573 |
+| Method | Threshold | AUROC | AUPRC | F1 | Point-adjusted F1 |
+|---|---|---:|---:|---:|---:|
+| Autoencoder | train q99.5 | 0.947 | 0.564 | 0.241 | 0.241 |
+| Autoencoder | EVT-POT | 0.947 | 0.564 | 0.243 | 0.243 |
+| MANTIS 9728-D | train q99.5 | 0.832 | 0.327 | 0.431 | 0.573 |
+| MANTIS 9728-D | EVT-POT | 0.832 | 0.327 | 0.430 | 0.571 |
 

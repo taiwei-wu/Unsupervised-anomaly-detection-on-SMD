@@ -22,7 +22,6 @@ class ExperimentConfig:
     ae_patience: int = 12
     ae_hidden_channels: int = 128
     mantis_batch_size: int = 128
-    mantis_projection_dim: int = 256
     mantis_device: str = "auto"
     figure_dpi: int = 220
     extra: dict[str, Any] = field(default_factory=dict)

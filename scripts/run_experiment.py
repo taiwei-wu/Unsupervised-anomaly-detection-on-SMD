@@ -13,8 +13,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from dl2ts.config import load_config
 from dl2ts.data import align_window_scores, fit_standardizer, load_smd_machine, sliding_windows
-from dl2ts.methods import score_mantis_embeddings, set_seed, train_autoencoder
-from dl2ts.metrics import evaluate_scores
+from dl2ts.methods import score_mantis_raw_embeddings, set_seed, train_autoencoder
+from dl2ts.metrics import evaluate_scores, evt_pot_threshold, quantile_threshold
 from dl2ts.plots import plot_curves, plot_metric_bars, plot_mixed_scale_scores, plot_scores, plot_training_history
 
 
@@ -55,29 +55,31 @@ def main() -> None:
         patience=cfg.ae_patience,
         hidden_channels=cfg.ae_hidden_channels,
     )
-    mantis = score_mantis_embeddings(
+    mantis = score_mantis_raw_embeddings(
         train_windows=train_windows,
         test_windows=test_windows,
         batch_size=cfg.mantis_batch_size,
-        projection_dim=cfg.mantis_projection_dim,
-        seed=cfg.seed,
         requested_device=cfg.mantis_device,
     )
 
     methods = {
         "Autoencoder": (ae.train_scores, ae.test_scores),
-        "MANTIS zero-shot": (mantis.train_scores, mantis.test_scores),
+        "MANTIS-9728": (mantis.train_scores, mantis.test_scores),
     }
     metrics_rows = []
     thresholds = {}
     test_scores = {}
     for name, (train_scores, scores) in methods.items():
-        threshold = float(np.quantile(train_scores, cfg.threshold_quantile))
-        thresholds[name] = threshold
         test_scores[name] = scores
-        row = {"method": name}
-        row.update(evaluate_scores(aligned_labels, scores, threshold))
-        metrics_rows.append(row)
+        threshold_specs = {
+            "train_q995": quantile_threshold(train_scores, cfg.threshold_quantile),
+            "evt_pot": evt_pot_threshold(train_scores),
+        }
+        thresholds[name] = threshold_specs["train_q995"]
+        for threshold_method, threshold in threshold_specs.items():
+            row = {"method": name, "threshold_method": threshold_method}
+            row.update(evaluate_scores(aligned_labels, scores, threshold))
+            metrics_rows.append(row)
 
     metrics_df = pd.DataFrame(metrics_rows)
     metrics_path = output_dir / "metrics.csv"
@@ -103,8 +105,9 @@ def main() -> None:
         "test_shape": list(test.shape),
         "n_windows": int(len(train_windows)),
         "mantis_embedding_dim": int(mantis.embedding_dim),
-        "mantis_projection_dim": int(mantis.projection_dim),
+        "mantis_projection_dim": mantis.projection_dim,
         "mantis_device": mantis.device,
+        "threshold_methods": ["train_q995", "evt_pot"],
         "autoencoder_checkpoint": str(ae.checkpoint_path),
     }
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -124,7 +127,7 @@ def main() -> None:
         ae.test_scores,
         mantis.test_scores,
         thresholds["Autoencoder"],
-        thresholds["MANTIS zero-shot"],
+        thresholds["MANTIS-9728"],
         dpi=max(cfg.figure_dpi, 420),
     )
     plot_curves(figure_dir / "roc_pr_curves.png", aligned_labels, test_scores, dpi=cfg.figure_dpi)

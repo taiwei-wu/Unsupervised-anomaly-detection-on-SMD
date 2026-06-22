@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+from scipy.stats import genpareto
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -12,6 +13,35 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
+
+
+def quantile_threshold(scores: np.ndarray, quantile: float = 0.995) -> float:
+    return float(np.quantile(np.asarray(scores, dtype=float), quantile))
+
+
+def evt_pot_threshold(
+    scores: np.ndarray,
+    tail_quantile: float = 0.98,
+    target_tail_probability: float = 0.005,
+) -> float:
+    """Estimate a high normal-score threshold with EVT peak-over-threshold fitting."""
+    scores = np.asarray(scores, dtype=float)
+    fallback = quantile_threshold(scores, 1.0 - target_tail_probability)
+    base = float(np.quantile(scores, tail_quantile))
+    excess = scores[scores > base] - base
+    tail_probability = len(excess) / len(scores)
+    if len(excess) < 20 or tail_probability <= target_tail_probability:
+        return fallback
+
+    shape, _, scale = genpareto.fit(excess, floc=0)
+    if not np.isfinite(scale) or scale <= 0:
+        return fallback
+
+    conditional_tail = target_tail_probability / tail_probability
+    threshold = base + float(genpareto.isf(conditional_tail, shape, loc=0, scale=scale))
+    if not np.isfinite(threshold):
+        return fallback
+    return threshold
 
 
 def point_adjust(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:

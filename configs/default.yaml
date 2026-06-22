@@ -11,6 +11,5 @@ ae_weight_decay: 0.00001
 ae_patience: 12
 ae_hidden_channels: 128
 mantis_batch_size: 128
-mantis_projection_dim: 256
 mantis_device: auto
 figure_dpi: 220

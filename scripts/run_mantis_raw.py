@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from dl2ts.config import load_config
 from dl2ts.data import align_window_scores, fit_standardizer, load_smd_machine, sliding_windows
 from dl2ts.methods import score_mantis_raw_embeddings, set_seed
-from dl2ts.metrics import evaluate_scores
+from dl2ts.metrics import evaluate_scores, evt_pot_threshold, quantile_threshold
 
 
 def main() -> None:
@@ -42,10 +42,16 @@ def main() -> None:
         batch_size=cfg.mantis_batch_size,
         requested_device=cfg.mantis_device,
     )
-    threshold = float(np.quantile(mantis.train_scores, cfg.threshold_quantile))
-    row = {"method": "MANTIS raw 9728-D"}
-    row.update(evaluate_scores(aligned_labels, mantis.test_scores, threshold))
-    metrics_df = pd.DataFrame([row])
+    metrics_rows = []
+    threshold_specs = {
+        "train_q995": quantile_threshold(mantis.train_scores, cfg.threshold_quantile),
+        "evt_pot": evt_pot_threshold(mantis.train_scores),
+    }
+    for threshold_method, threshold in threshold_specs.items():
+        row = {"method": "MANTIS raw 9728-D", "threshold_method": threshold_method}
+        row.update(evaluate_scores(aligned_labels, mantis.test_scores, threshold))
+        metrics_rows.append(row)
+    metrics_df = pd.DataFrame(metrics_rows)
     metrics_df.to_csv(output_dir / "metrics.csv", index=False)
 
     np.savez_compressed(

@@ -15,5 +15,9 @@
   "n_test_windows": 28384,
   "embedding_dim": 9728,
   "projection": null,
-  "device": "cuda"
+  "device": "cuda",
+  "threshold_methods": [
+    "train_q995",
+    "evt_pot"
+  ]
 }

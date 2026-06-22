@@ -13,7 +13,11 @@
   ],
   "n_windows": 28384,
   "mantis_embedding_dim": 9728,
-  "mantis_projection_dim": 256,
+  "mantis_projection_dim": null,
   "mantis_device": "cuda",
-  "autoencoder_checkpoint": "/root/DL4TS/outputs/machine-1-1/autoencoder.pt"
+  "threshold_methods": [
+    "train_q995",
+    "evt_pot"
+  ],
+  "autoencoder_checkpoint": "outputs/machine-1-1/autoencoder.pt"
 }
